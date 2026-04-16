@@ -33,8 +33,13 @@ router.post('/', (req, res) => {
     return res.status(400).json({ error });
   }
 
-  const task = taskService.create(req.body);
-  res.status(201).json(task);
+  try {
+    const task = taskService.create(req.body);
+    res.status(201).json(task);
+  } catch (err) {
+    // ✅ prevents crash (Bug #4 improvement)
+    res.status(400).json({ error: err.message });
+  }
 });
 
 router.put('/:id', (req, res) => {
@@ -68,5 +73,25 @@ router.patch('/:id/complete', (req, res) => {
 
   res.json(task);
 });
+
+
+// ✅ NEW FEATURE: Assign Task
+router.patch('/:id/assign', (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    const task = taskService.assignTask(req.params.id, userId);
+    res.json(task);
+
+  } catch (err) {
+    // consistent error handling
+    if (err.message === 'Task not found') {
+      return res.status(404).json({ error: err.message });
+    }
+
+    res.status(400).json({ error: err.message });
+  }
+});
+
 
 module.exports = router;
